@@ -1,6 +1,6 @@
 # Distress-Signal-Recognition
 Distress signal recognition using computer vision and keypoint detection.
-![image](https://user-images.githubusercontent.com/64269342/220776654-6c8e1d11-5622-42c0-a8e0-611f258c5967.png)
+![image](https://user-images.githubusercontent.com/64269342/220776962-26ef44b5-04fd-4ef9-8d40-f6fc85c6e14c.png)
 
 To detect a human wave using pose estimation from a camera feed, you can follow these general steps:
 
