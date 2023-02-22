@@ -1,0 +1,9 @@
+1) Main Tasks
+-> openpose lightweight - build algo to detect hand raise.
+                        - wave and run on lenovo and dell.
+                        - Research on different methods to implement wave
+                        - Distress signal
+
+2) Secondary Task
+-> Movenet - run the same algo on lenovo and dell to do a comparative analysis.
+-> WebDev
