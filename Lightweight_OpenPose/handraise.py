@@ -55,7 +55,7 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
                pad_value=(0, 0, 0), img_mean=np.array([128, 128, 128], np.float32), img_scale=np.float32(1/256)):
     height, width, _ = img.shape
     scale = net_input_height_size / height
-
+    
     scaled_img = cv2.resize(img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
     scaled_img = normalize(scaled_img, img_mean, img_scale)
     min_dims = [net_input_height_size, max(scaled_img.shape[1], net_input_height_size)]
@@ -79,13 +79,6 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
 
 
 def run_demo(net, image_provider, height_size, cpu, track, smooth):
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 1
-    color = (0, 255, 0)
-    thickness = 2
-    org = (20,20)
-
     net = net.eval()
     if not cpu:
         net = net.cuda()
@@ -122,46 +115,37 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             pose = Pose(pose_keypoints, pose_entries[n][18])
             current_poses.append(pose)
 
-        
+
+        font = cv2.FONT_HERSHEY_SIMPLEX   # font
+        fontScale = 1 #fontScale
+        color = (0, 255, 0)
+        thickness = 2
+        org = (20,20) # coordinates
 
 # pose.keypoints - will have all the X,Y coordinates of the keypoints
-
 # order of the key point => ['nose', 'neck', 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri', 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank', 'r_eye', 'l_eye','r_ear', 'l_ear']
-        # coordinateX = pose.keypoints[0][0] # sample - getting nose key points x coordinate
-        # coordinateY = pose.keypoints[0][1] # sample - getting nose key points y coordinate
+        # coordinateY = pose.keypoints[0][0] # sample - getting nose key points y coordinate
+        # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate
         
-        right_shoulderX,right_shoulderY =  pose.keypoints[2][0], pose.keypoints[2][1]
-        left_shoulderX, left_shoulderY =  pose.keypoints[5][0], pose.keypoints[5][1]
+        right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
+        left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
 
-        right_elbowX, right_elbowY = pose.keypoints[3][0], pose.keypoints[3][1]
-        left_elbowX, left_elbowY = pose.keypoints[6][0], pose.keypoints[6][1]
+        right_elbowY, right_elbowX = pose.keypoints[3][0], pose.keypoints[3][1]
+        left_elbowY, left_elbowX = pose.keypoints[6][0], pose.keypoints[6][1]
 
-        
+# # detect right hand raise
+
+        if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX:# and right_elbowY < right_shoulderY :
+            cv2.putText(img, "Hand raise", (300, 50), font, 2,
+                    (0,0,255), thickness, cv2.LINE_4)
+
 
 # show keypoints on display
         #draw coordinates on frame
-        cv2.putText(img, str(right_shoulderX)+", "+ str(right_shoulderY), (right_shoulderX, right_shoulderY), font, fontScale,
+        cv2.putText(img, "y,x:"+str(right_shoulderY)+","+str(right_shoulderX), (right_shoulderY,right_shoulderX ), font, fontScale,
                     color, thickness, cv2.LINE_4)
-        cv2.putText(img, str(right_elbowX)+", "+ str(right_elbowY), (right_elbowX, right_elbowY), font, fontScale,
+        cv2.putText(img, "y,x:"+str(right_elbowY)+","+str(right_elbowX), (right_elbowY, right_elbowX), font, fontScale,
                     color, thickness, cv2.LINE_4)
-
-
-# detect right hand raise
-        
-
-
-        # if track:
-        #     track_poses(previous_poses, current_poses, smooth=smooth)
-        #     previous_poses = current_poses
-        # for pose in current_poses:
-        #     pose.draw(img)
-        # img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
-        # for pose in current_poses:
-        #     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-        #                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
-        #     if track:
-        #         cv2.putText(img, 'id: {}'.format(pose.id), (pose.bbox[0], pose.bbox[1] - 16),
-        #                     cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
 
         new_frame_time = time.time()
  
@@ -177,26 +161,28 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         fps = int(fps)
     
         # converting the fps to string so that we can display it on frame
+        
         # by using putText function
         fps = str(fps)
-            # font
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        
-        # org
-        org = (50, 50)
-        
-        # fontScale
-        fontScale = 2
-        
-        # Blue color in BGR
-        color = (255, 255, 255)
-        
-        # Line thickness of 2 px
-        thickness = 3
-        
+      
         # Using cv2.putText() method
-        cv2.putText(img, 'FPS: '+ fps, org, font, 
-                        fontScale, color, thickness, cv2.LINE_AA)
+        cv2.putText(img, 'FPS: '+ fps, (50,50), font, 
+                        fontScale, (255,255,255), thickness, cv2.LINE_AA)
+        
+
+         # if track:
+        #     track_poses(previous_poses, current_poses, smooth=smooth)
+        #     previous_poses = current_poses
+        # for pose in current_poses:
+        #     pose.draw(img)
+        # img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
+        # for pose in current_poses:
+        #     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+        #                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+        #     if track:
+        #         cv2.putText(img, 'id: {}'.format(pose.id), (pose.bbox[0], pose.bbox[1] - 16),
+        #                     cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+
         cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
 
 
