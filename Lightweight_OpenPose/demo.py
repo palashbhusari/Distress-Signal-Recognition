@@ -115,18 +115,36 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             pose = Pose(pose_keypoints, pose_entries[n][18])
             current_poses.append(pose)
 
-        if track:
-            track_poses(previous_poses, current_poses, smooth=smooth)
-            previous_poses = current_poses
-        for pose in current_poses:
-            pose.draw(img)
-        img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
-        for pose in current_poses:
-            cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-                          (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
-            if track:
-                cv2.putText(img, 'id: {}'.format(pose.id), (pose.bbox[0], pose.bbox[1] - 16),
-                            cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+# pose.keypoints - will have all the X,Y coordinates of the keypoints
+
+# order of the key point => ['nose', 'neck', 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri', 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank', 'r_eye', 'l_eye','r_ear', 'l_ear']
+        coordinateX = pose.keypoints[0][0] # sample - getting nose key points x coordinate
+        coordinateY = pose.keypoints[0][1] # sample - getting nose key points y coordinate
+        
+# show keypoints on display
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1
+        color = (0, 255, 0)
+        thickness = 2
+        org = (20,20)
+
+        #draw coordinates on frame
+        cv2.putText(img, str(coordinateX)+", "+ str(coordinateY), (coordinateX, coordinateY), font, fontScale,
+                    color, thickness, cv2.LINE_4)
+
+
+        # if track:
+        #     track_poses(previous_poses, current_poses, smooth=smooth)
+        #     previous_poses = current_poses
+        # for pose in current_poses:
+        #     pose.draw(img)
+        # img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
+        # for pose in current_poses:
+        #     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+        #                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+        #     if track:
+        #         cv2.putText(img, 'id: {}'.format(pose.id), (pose.bbox[0], pose.bbox[1] - 16),
+        #                     cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
 
         new_frame_time = time.time()
  
@@ -163,6 +181,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         cv2.putText(img, 'FPS: '+ fps, org, font, 
                         fontScale, color, thickness, cv2.LINE_AA)
         cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
+
+
         key = cv2.waitKey(delay)
         if key == 27:  # esc
             return
