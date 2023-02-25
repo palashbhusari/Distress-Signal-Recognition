@@ -79,6 +79,13 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
 
 
 def run_demo(net, image_provider, height_size, cpu, track, smooth):
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 1
+    color = (0, 255, 0)
+    thickness = 2
+    org = (20,20)
+
     net = net.eval()
     if not cpu:
         net = net.cuda()
@@ -115,22 +122,32 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             pose = Pose(pose_keypoints, pose_entries[n][18])
             current_poses.append(pose)
 
+        
+
 # pose.keypoints - will have all the X,Y coordinates of the keypoints
 
 # order of the key point => ['nose', 'neck', 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri', 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank', 'r_eye', 'l_eye','r_ear', 'l_ear']
-        coordinateX = pose.keypoints[0][0] # sample - getting nose key points x coordinate
-        coordinateY = pose.keypoints[0][1] # sample - getting nose key points y coordinate
+        # coordinateX = pose.keypoints[0][0] # sample - getting nose key points x coordinate
+        # coordinateY = pose.keypoints[0][1] # sample - getting nose key points y coordinate
         
-# show keypoints on display
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1
-        color = (0, 255, 0)
-        thickness = 2
-        org = (20,20)
+        right_shoulderX,right_shoulderY =  pose.keypoints[2][0], pose.keypoints[2][1]
+        left_shoulderX, left_shoulderY =  pose.keypoints[5][0], pose.keypoints[5][1]
 
+        right_elbowX, right_elbowY = pose.keypoints[3][0], pose.keypoints[3][1]
+        left_elbowX, left_elbowY = pose.keypoints[6][0], pose.keypoints[6][1]
+
+        
+
+# show keypoints on display
         #draw coordinates on frame
-        cv2.putText(img, str(coordinateX)+", "+ str(coordinateY), (coordinateX, coordinateY), font, fontScale,
+        cv2.putText(img, str(right_shoulderX)+", "+ str(right_shoulderY), (right_shoulderX, right_shoulderY), font, fontScale,
                     color, thickness, cv2.LINE_4)
+        cv2.putText(img, str(right_elbowX)+", "+ str(right_elbowY), (right_elbowX, right_elbowY), font, fontScale,
+                    color, thickness, cv2.LINE_4)
+
+
+# detect right hand raise
+        
 
 
         # if track:
