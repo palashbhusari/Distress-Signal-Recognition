@@ -7,3 +7,10 @@
 2) Secondary Task
 -> Movenet - run the same algo on lenovo and dell to do a comparative analysis.
 -> WebDev
+
+
+MOM - 2/25
+Single person hand raise - identified co-ordinates and visualized keypoints co-ordinates detection.
+Multiperson hand raise - coded 
+Improving accuracy by elimination of false detection when person is facing away from camera.
+Sample testing of the single and multiperson hand detection.
