@@ -1,5 +1,6 @@
 import argparse
 import time
+import math
 import cv2
 import numpy as np
 import torch
@@ -78,6 +79,30 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
     return heatmaps, pafs, scale, pad
 
 
+def calculate_angle(pt1,pt2,pt3):
+    """#angles between the line segments connecting pt1 to pt2 and pt1 to pt3."""
+    a = np.array(pt2) # First 11
+    b = np.array(pt1) # Mid 13
+    c = np.array(pt3) # End 15
+    
+    radians = np.arctan2(c[1]-b[1], c[0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0])
+    angle = np.abs(radians*180.0/np.pi)
+    
+    if angle >180.0:
+        angle = 360-angle
+        
+    return angle
+
+def wave_detection(keyPoints):
+    
+    right_wrist,left_wrist = keyPoints[4], keyPoints[7]
+    right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
+    # angle A: right_wrist - right_shoulder - left_shoulder
+    angleA = calculate_angle(right_shoulder,right_wrist,left_shoulder) # pt1 to pt2 and pt1 to pt3.
+    #angle B: left_wrist - left_shoulder - right_shoulder
+    angleB = calculate_angle(left_shoulder,left_wrist,right_shoulder)
+    print(angleA,angleB)
+
 def run_demo(net, image_provider, height_size, cpu, track, smooth):
     net = net.eval()
     if not cpu:
@@ -120,41 +145,30 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         fontScale = 1 #fontScale
         color = (255, 255, 255)
         thickness = 2
-        org = (20,20) # coordinates
 
         new_frame_time = time.time()
  # Calculating the fps
-    
         # fps will be number of frame processed in given time frame
         # since their will be most of time error of 0.001 second
-        # we will be subtracting it to get more accurate result
-        fps = 1/(new_frame_time-prev_frame_time)
+        fps = 1/(new_frame_time-prev_frame_time)  # we will be subtracting it to get more accurate result
         prev_frame_time = new_frame_time
-        # converting the fps into integer
-        fps = int(fps)
-        # converting the fps to string so that we can display it on frame
-        # by using putText function
-        fps = str(fps)
-      
+        fps = int(fps) # converting the fps into integer
         # Using cv2.putText() method
-        cv2.putText(img, 'FPS: '+ fps, (50,50), font, 
-                        fontScale, (255,255,255), thickness, cv2.LINE_AA)
+        cv2.putText(img, 'FPS: '+ str(fps), (50,50), font, 
+                        fontScale, (255,0,0), thickness, cv2.LINE_AA)
         
-
         if track:
             track_poses(previous_poses, current_poses, smooth=smooth)
             previous_poses = current_poses
-        for pose in current_poses:
-            pose.draw(img)
+        # for pose in current_poses:  # drawing pose
+        #     pose.draw(img)
         img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
         
-        for pose in current_poses:
-            
+        for pose in current_poses:         
     # pose.keypoints - will have all the X,Y coordinates of the keypoints
     # order of the key point => ['nose', 'neck', 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri', 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank', 'r_eye', 'l_eye','r_ear', 'l_ear']
             # coordinateY = pose.keypoints[0][0] # sample - getting nose key points y coordinate
-            # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate
-            
+            # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate 
             right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
             left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
 
@@ -166,8 +180,9 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             facing_front = right_shoulderY <  left_shoulderY
 
             if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front:
-                cv2.putText(img, "Hand raise", (300, 50), font, 2,
-                        (0,0,255), thickness, cv2.LINE_4)
+                cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
+
+                wave_detection(pose.keypoints) # wave detection algorithm
 
     # show keypoints on display
             #draw coordinates on frame
