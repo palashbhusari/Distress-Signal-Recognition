@@ -116,6 +116,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     prev_frame_time = 0 
     counter = 0 
     stage = None
+    key_point_wave = []
     for img in image_provider:
         orig_img = img.copy()
         heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
@@ -141,7 +142,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             pose = Pose(pose_keypoints, pose_entries[n][18])
             current_poses.append(pose)
 
-
+       
         font = cv2.FONT_HERSHEY_SIMPLEX   # font
         fontScale = 1 #fontScale
         color = (255, 255, 255)
@@ -222,19 +223,25 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                             font, 2 , (0, 0, 255), thickness, cv2.LINE_AA
                                     )            
                     
-
-                              
+                
             if left_angle > 120 and right_angle >120:
                 stage = "down"
             if left_angle < 80 and right_angle <80 and stage =='down' and  right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front :
                 stage="Hand raise"
+                key_point_wave.append([left_shoulder, left_elbow, left_wrist, right_shoulder, right_elbow, right_wrist])
+                with open('output.txt', 'w') as file:
+                    for value in key_point_wave:
+                        file.write(str(value) + '\n')
                 counter +=1
                 print(counter)
             if counter >=3:
                 stage = "Wave"
-  
-        
-        # Setup status box
+                
+
+
+
+
+            # Setup status box
             cv2.rectangle(img, (0,0), (250,73), (245,117,16), -1)
             # -1 fills the color 
             
@@ -253,7 +260,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                         cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2, cv2.LINE_AA)
                        
 
-
+        
     # show keypoints on display
             #draw coordinates on frame
             # cv2.putText(img, "R y,x:"+str(right_shoulderY)+","+str(right_shoulderX), (right_shoulderY,right_shoulderX ), font, fontScale,
@@ -269,7 +276,6 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
 
-
         key = cv2.waitKey(delay)
         if key == 27:  # esc
             return
@@ -278,6 +284,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 delay = 0
             else:
                 delay = 1
+
+
 
 
 if __name__ == '__main__':
@@ -308,3 +316,4 @@ if __name__ == '__main__':
         args.track = 0
 
     run_demo(net, frame_provider, args.height_size, args.cpu, args.track, args.smooth)
+    
