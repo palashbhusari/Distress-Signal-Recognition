@@ -1,5 +1,6 @@
 import argparse
 import time
+import math
 import cv2
 import numpy as np
 import torch
@@ -78,6 +79,56 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
     return heatmaps, pafs, scale, pad
 
 
+def calculate_angle(pt1,pt2,pt3):
+    """Calculates the angle between three points pt1(x1, y1),pt2 (x2, y2), and pt3(x3, y3)"""
+    dx1 = pt1[1] - pt2[1] # dist x1 -x2
+    dy1 = pt1[0] - pt2[0] # dist y1 -y2
+    dx2 = pt3[1] - pt2[1] # dist x1 -x2
+    dy2 = pt3[0] - pt2[0] # dist y3 -y2
+    
+    angle1 = math.atan2(dy1, dx1)
+    angle2 = math.atan2(dy2, dx2)
+    angle = angle1 - angle2
+    if angle < 0:
+        angle += 2 * math.pi
+    return math.degrees(angle) if angle >= 0 else math.degrees(angle + 2 * math.pi)
+
+def wave_detection(keyPoints,waveCounter,initial_state):
+    wave = False
+    right_wrist,left_wrist = keyPoints[4], keyPoints[7]
+    right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
+    angleA = calculate_angle(right_wrist,right_shoulder,left_shoulder) # angle between pt1 - pt2 - pt3 | pt = [y,x]
+    angleB = calculate_angle(right_shoulder,left_shoulder,left_wrist)
+    print(int(angleA),int(angleB))
+    
+    if angleA < 200  and angleB < 200: # above shoulder
+        if angleA > 110  and angleB > 110: # initial sate -> open
+            currentState = 0
+        elif angleA < 110  and angleB < 110: # initial sate -> close
+            currentState = 1
+        else:
+            currentState = 99
+            wave = False
+            waveCounter = 0
+        
+        if currentState == 1 and initial_state == 0: # open to close
+            waveCounter += 1
+        if currentState == 0 and initial_state == 1: # open to close
+            waveCounter += 1
+    else:
+        currentState = 99 # anything but open or close
+        waveCounter = 0
+        wave = False
+    
+    if waveCounter >= 3:
+        wave = True
+
+    initial_state = currentState
+    print(waveCounter, initial_state, wave)
+    return waveCounter, initial_state, wave
+
+
+
 def run_demo(net, image_provider, height_size, cpu, track, smooth):
     net = net.eval()
     if not cpu:
@@ -90,6 +141,12 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     delay = 1
     new_frame_time = 0 
     prev_frame_time = 0 
+
+    #initializing starting global wave variables
+    wavecounter = 0
+    state = 99 # not open or close - > 0 0r 1
+    
+
     for img in image_provider:
         orig_img = img.copy()
         heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
@@ -120,62 +177,59 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         fontScale = 1 #fontScale
         color = (255, 255, 255)
         thickness = 2
-        org = (20,20) # coordinates
 
         new_frame_time = time.time()
  # Calculating the fps
-    
         # fps will be number of frame processed in given time frame
         # since their will be most of time error of 0.001 second
-        # we will be subtracting it to get more accurate result
-        fps = 1/(new_frame_time-prev_frame_time)
+        fps = 1/(new_frame_time-prev_frame_time)  # we will be subtracting it to get more accurate result
         prev_frame_time = new_frame_time
-        # converting the fps into integer
-        fps = int(fps)
-        # converting the fps to string so that we can display it on frame
-        # by using putText function
-        fps = str(fps)
-      
+        fps = int(fps) # converting the fps into integer
         # Using cv2.putText() method
-        cv2.putText(img, 'FPS: '+ fps, (50,50), font, 
-                        fontScale, (255,255,255), thickness, cv2.LINE_AA)
+        cv2.putText(img, 'FPS: '+ str(fps), (50,50), font, 
+                        fontScale, (255,0,0), thickness, cv2.LINE_AA)
         
-
         if track:
             track_poses(previous_poses, current_poses, smooth=smooth)
             previous_poses = current_poses
-        for pose in current_poses:
-            pose.draw(img)
+        # for pose in current_poses:  # drawing pose
+        #     pose.draw(img)
         img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
-        
+    
         for pose in current_poses:
-            
-    # pose.keypoints - will have all the X,Y coordinates of the keypoints
-    # order of the key point => ['nose', 'neck', 'r_sho', 'r_elb', 'r_wri', 'l_sho', 'l_elb', 'l_wri', 'r_hip', 'r_knee', 'r_ank', 'l_hip', 'l_knee', 'l_ank', 'r_eye', 'l_eye','r_ear', 'l_ear']
+    # order of the [y,x] pose.keypoints => [0'nose', 1'neck', 2'r_sho', 3'r_elb', 4'r_wri', 5'l_sho', 6'l_elb',7'l_wri', 8'r_hip', 
+    #                            9'r_knee', 10'r_ank', 11'l_hip', 12'l_knee', 13'l_ank', 14'r_eye', 15'l_eye', 16'r_ear', 17'l_ear']
             # coordinateY = pose.keypoints[0][0] # sample - getting nose key points y coordinate
-            # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate
-            
+            # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate 
             right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
             left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
 
             right_elbowY, right_elbowX = pose.keypoints[3][0], pose.keypoints[3][1]
             left_elbowY, left_elbowX = pose.keypoints[6][0], pose.keypoints[6][1]
 
-    # # detect right hand raise
-            # check face direction
-            facing_front = right_shoulderY <  left_shoulderY
+            #detect right hand raise
+            handraise = False
+            facing_front = right_shoulderY <  left_shoulderY # check face direction
+            if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
+                handraise = True
+                cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
-            if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front:
-                cv2.putText(img, "Hand raise", (300, 50), font, 2,
-                        (0,0,255), thickness, cv2.LINE_4)
+            wavecounter, state, wave = wave_detection(pose.keypoints,wavecounter,state) # hand wave detection algorithm
+            if wave:
+                cv2.putText(img, "wWve Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
+
+############ just for refrence
+            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
+            cv2.line(img, (right_shoulderY,right_shoulderX), (left_shoulderY, left_shoulderX), color, thickness)
+            cv2.line(img, (right_shoulderY,right_shoulderX), right_wrist, color, thickness) 
+            cv2.line(img, (left_shoulderY, left_shoulderX), left_wrist, color, thickness) 
+################         
 
     # show keypoints on display
             #draw coordinates on frame
-            cv2.putText(img, "R y,x:"+str(right_shoulderY)+","+str(right_shoulderX), (right_shoulderY,right_shoulderX ), font, fontScale,
+            cv2.putText(img, "R", (right_shoulderY,right_shoulderX ), font, fontScale, # Righ side inidcator
                         color, thickness, cv2.LINE_4)
-            cv2.putText(img, "R y,x:"+str(right_elbowY)+","+str(right_elbowX), (right_elbowY, right_elbowX), font, fontScale,
-                        color, thickness, cv2.LINE_4)
-
+            
             # cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
             #               (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
             if track:
