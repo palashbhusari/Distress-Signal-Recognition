@@ -97,14 +97,16 @@ def wave_detection(keyPoints,waveCounter,initial_state):
     wave = False
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
-    angleA = calculate_angle(right_wrist,right_shoulder,left_shoulder) # angle between pt1 - pt2 - pt3 | pt = [y,x]
+    if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
+        return
+    angleA = 360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) # angle between pt1 - pt2 - pt3 | pt = [y,x]
     angleB = calculate_angle(right_shoulder,left_shoulder,left_wrist)
-    print(int(angleA),int(angleB))
-    
-    if angleA < 200  and angleB < 200: # above shoulder
-        if angleA > 110  and angleB > 110: # initial sate -> open
+    angleAvg = int((angleA + angleB ) / 2 )
+    print(angleAvg)
+    if angleA < 200  and angleB < 200 and angleA > 30 and angleB > 30: # above shoulder
+        if angleAvg > 105: # initial sate -> open
             currentState = 0
-        elif angleA < 110  and angleB < 110: # initial sate -> close
+        elif angleAvg < 110: # initial sate -> close
             currentState = 1
         else:
             currentState = 99
@@ -117,14 +119,15 @@ def wave_detection(keyPoints,waveCounter,initial_state):
             waveCounter += 1
     else:
         currentState = 99 # anything but open or close
-        waveCounter = 0
         wave = False
+        waveCounter = 0
+        
     
     if waveCounter >= 3:
         wave = True
 
     initial_state = currentState
-    print(waveCounter, initial_state, wave)
+    print(f"count:{waveCounter} state:{initial_state}")
     return waveCounter, initial_state, wave
 
 
@@ -216,7 +219,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
             wavecounter, state, wave = wave_detection(pose.keypoints,wavecounter,state) # hand wave detection algorithm
             if wave:
-                cv2.putText(img, "wWve Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
+                cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
