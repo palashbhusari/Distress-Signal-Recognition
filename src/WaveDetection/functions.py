@@ -3,7 +3,7 @@
 import math
 
 def calculate_angle(pt1,pt2,pt3):
-    """Calculates the angle between three points pt1(x1, y1),pt2 (x2, y2), and pt3(x3, y3)"""
+    """Calculates the angle between pt1 - pt2 - pt3 | pt = [y,x]"""
     dx1 = pt1[1] - pt2[1] # dist x1 -x2
     dy1 = pt1[0] - pt2[0] # dist y1 -y2
     dx2 = pt3[1] - pt2[1] # dist x1 -x2
@@ -18,19 +18,22 @@ def calculate_angle(pt1,pt2,pt3):
 
 def wave_detection(keyPoints,waveCounter,initialState):
     wave = False
+    toggleAngle = 115 # state switching angle
+    waveSpaceAngles = [250,30] # wave detection lower threshold and hand cross threshold
+
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
     if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
         return
-    angleA = 360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) # angle between pt1 - pt2 - pt3 | pt = [y,x]
+    angleA = 360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) 
     angleB = calculate_angle(right_shoulder,left_shoulder,left_wrist)
     angleAvg = int((angleA + angleB ) / 2 )
     print(angleAvg)
-    if angleA < 250  and angleB < 250 and angleA > 30 and angleB > 30: # above shoulder
-        if (angleA >= (angleB -20) and angleA <= (angleB +20)) and( angleA >= (angleB -20) and angleA <= (angleB +20)):
-            if angleAvg >= 115: # initial sate -> open
+    if angleA < waveSpaceAngles[0]  and angleB < waveSpaceAngles[0] and angleA > waveSpaceAngles[1] and angleB > waveSpaceAngles[1]: # wave detection space
+        if (angleA >= (angleB - 20) and angleA <= (angleB + 20)) and( angleA >= (angleB - 20) and angleA <= (angleB + 20)):
+            if angleAvg >= toggleAngle: # initial sate -> open
                 currentState = 0
-            elif angleAvg <= 115: # initial sate -> close
+            elif angleAvg <= toggleAngle: # initial sate -> close
                 currentState = 1
             else:
                 currentState = 99
@@ -48,7 +51,7 @@ def wave_detection(keyPoints,waveCounter,initialState):
         wave = False
         waveCounter = 0
         
-    
+
     if waveCounter >= 5:
         wave = True
 
