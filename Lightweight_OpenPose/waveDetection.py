@@ -78,7 +78,6 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
 
     return heatmaps, pafs, scale, pad
 
-
 def calculate_angle(pt1,pt2,pt3):
     """Calculates the angle between three points pt1(x1, y1),pt2 (x2, y2), and pt3(x3, y3)"""
     dx1 = pt1[1] - pt2[1] # dist x1 -x2
@@ -121,11 +120,18 @@ def wave_detection(keyPoints,waveCounter,initial_state):
         currentState = 99 # anything but open or close
         wave = False
         waveCounter = 0
-        
-    
-    if waveCounter >= 3:
-        wave = True
 
+    # reset wave counter every few seconds   
+    now = time.time()
+    reset_time += prev - now
+    print(reset_time)
+    if reset_time > 3: # variable reset time
+        waveCounter = 0
+        reset_time = 0
+    prev = now
+
+    if waveCounter > 3:
+        wave = True
     initial_state = currentState
     print(f"count:{waveCounter} state:{initial_state}")
     return waveCounter, initial_state, wave
@@ -149,8 +155,9 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     wavecounter = 0
     state = 99 # not open or close - > 0 0r 1
     
-
     for img in image_provider:
+        start_time = time.time()
+
         orig_img = img.copy()
         heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
@@ -186,12 +193,15 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         # fps will be number of frame processed in given time frame
         # since their will be most of time error of 0.001 second
         fps = 1/(new_frame_time-prev_frame_time)  # we will be subtracting it to get more accurate result
-        prev_frame_time = new_frame_time
         fps = int(fps) # converting the fps into integer
-        # Using cv2.putText() method
         cv2.putText(img, 'FPS: '+ str(fps), (50,50), font, 
                         fontScale, (255,0,0), thickness, cv2.LINE_AA)
         
+
+        prev_frame_time = new_frame_time
+        
+        
+
         if track:
             track_poses(previous_poses, current_poses, smooth=smooth)
             previous_poses = current_poses
@@ -241,6 +251,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
 
+        end_time = time.time()
 
         key = cv2.waitKey(delay)
         if key == 27:  # esc
