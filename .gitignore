@@ -1,0 +1,5 @@
+/src/sampleVideos
+/src/checkpoint*
+*__pycache__*
+*.pyc
+*.DS_Store
