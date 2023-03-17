@@ -102,40 +102,35 @@ def wave_detection(keyPoints,waveCounter,initial_state):
     angleB = calculate_angle(right_shoulder,left_shoulder,left_wrist)
     angleAvg = int((angleA + angleB ) / 2 )
     print(angleAvg)
-    if angleA < 200  and angleB < 200 and angleA > 30 and angleB > 30: # above shoulder
-        if angleAvg > 105: # initial sate -> open
-            currentState = 0
-        elif angleAvg < 110: # initial sate -> close
-            currentState = 1
+    if angleA < 250  and angleB < 250 and angleA > 30 and angleB > 30: # above shoulder
+        if (angleA >= (angleB -20) and angleA <= (angleB +20)) and( angleA >= (angleB -20) and angleA <= (angleB +20)):
+            if angleAvg >= 115: # initial sate -> open
+                currentState = 0
+            elif angleAvg <= 115: # initial sate -> close
+                currentState = 1
+            else:
+                currentState = 99
+                wave = False
+                #waveCounter = 0
+            
+            if currentState == 1 and initial_state == 0: # open to close
+                waveCounter += 1
+            if currentState == 0 and initial_state == 1: # open to close
+                waveCounter += 1
         else:
             currentState = 99
-            wave = False
-            waveCounter = 0
-        
-        if currentState == 1 and initial_state == 0: # open to close
-            waveCounter += 1
-        if currentState == 0 and initial_state == 1: # open to close
-            waveCounter += 1
     else:
         currentState = 99 # anything but open or close
         wave = False
         waveCounter = 0
-
-    # reset wave counter every few seconds   
-    now = time.time()
-    reset_time += prev - now
-    print(reset_time)
-    if reset_time > 3: # variable reset time
-        waveCounter = 0
-        reset_time = 0
-    prev = now
-
-    if waveCounter > 3:
+        
+    
+    if waveCounter >= 5:
         wave = True
+
     initial_state = currentState
     print(f"count:{waveCounter} state:{initial_state}")
     return waveCounter, initial_state, wave
-
 
 
 def run_demo(net, image_provider, height_size, cpu, track, smooth):
