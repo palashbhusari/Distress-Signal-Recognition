@@ -20,7 +20,7 @@ def wave_detection(keyPoints,waveCounter,initialState):
     wave = False
     toggleAngle = 115 # state switching angle
     waveSpaceAngles = [250,30] # wave detection lower threshold and hand cross threshold
-    handWaved = 3 # time the hand is waved
+    handWaved = 4 # time the hand is waved
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
 
@@ -33,7 +33,7 @@ def wave_detection(keyPoints,waveCounter,initialState):
 
     #print(angleAvg)
     if angleA < waveSpaceAngles[0]  and angleB < waveSpaceAngles[0] and angleA > waveSpaceAngles[1] and angleB > waveSpaceAngles[1]: # wave detection space
-        if (angleA >= (angleB - 20) and angleA <= (angleB + 20)) and( angleA >= (angleB - 20) and angleA <= (angleB + 20)):
+        if (angleA >= (angleB - 20) and angleA <= (angleB + 20)) and( angleA >= (angleB - 20) and angleA <= (angleB + 20)): # halleluya X
             if angleAvg >= toggleAngle: # initial sate -> open
                 currentState = 0
             elif angleAvg <= toggleAngle: # initial sate -> close

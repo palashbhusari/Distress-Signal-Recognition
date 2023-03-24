@@ -10,7 +10,8 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from WaveDetection.functions import wave_detection
+from ML.dataExtracation import extract_data, save_to_csv
+
 
 class ImageReader(object):
     def __init__(self, file_names):
@@ -91,10 +92,6 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     delay = 1
     new_frame_time = 0 
     prev_frame_time = 0 
-
-    #initializing starting global wave variables
-    waveCounter = 0
-    state = None # NONE |  open or close - > 0 0r 1
     
     for img in image_provider:
 
@@ -157,24 +154,16 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
             right_elbowY, right_elbowX = pose.keypoints[3][0], pose.keypoints[3][1]
             left_elbowY, left_elbowX = pose.keypoints[6][0], pose.keypoints[6][1]
-
-            # detect right hand raise
+            
+            # # detect right hand raise
             handraise = False
             facing_front = right_shoulderY <  left_shoulderY # check face direction
             if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
                 handraise = True
                 cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
-            # state = pose.state
-            # waveCounter = pose.count
-            # print(f"before: state {pose.state} cnt: {pose.count} id: {pose.id}")
-            # print(" ")
-            # waveCounter1, state1, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
-            # pose.update_state(state1, waveCounter1)
-            # print(f"after: state {pose.state} cnt: {pose.count} id: {pose.id}")
-            # print("  ")
-            # if wave:
-            #     cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
+            # collect training data
+            trainData = extract_data(pose.keypoints,handraise)
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
@@ -199,8 +188,10 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         key = cv2.waitKey(delay)
         if key == 27:  # esc
+            save_to_csv(trainData)
             return
         elif key == 112:  # 'p'
+            
             if delay == 1:
                 delay = 0
             else:
