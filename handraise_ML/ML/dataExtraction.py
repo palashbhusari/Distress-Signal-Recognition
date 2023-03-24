@@ -16,16 +16,17 @@ def calculate_angle(pt1,pt2,pt3):
         angle += 2 * math.pi
     return math.degrees(angle) if angle >= 0 else math.degrees(angle + 2 * math.pi)
 
-
 dataDict = {'upperRightShoulder':[], 'upperLeftShoulder':[], 'handRaise':[]}
+
+
 def extract_data(keyPoints,handraise):
     global dataDict
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
 
-
     if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
         return
+    
     upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
     upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
 

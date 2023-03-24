@@ -10,7 +10,8 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtracation import extract_data, save_to_csv
+from ML.dataExtraction import extract_data, save_to_csv, calculate_angle
+from ML.prediction import infer
 
 
 class ImageReader(object):
@@ -162,8 +163,22 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 handraise = True
                 cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
-            # collect training data
-            trainData = extract_data(pose.keypoints,handraise)
+
+            # # collect training data
+            # trainData = extract_data(pose.keypoints,handraise)
+            # # Prediction 
+            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
+            right_shoulder,left_shoulder = pose.keypoints[2],pose.keypoints[5]
+
+            if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
+                return
+    
+            upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
+            upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
+
+            print(infer([upperRightShoulder, upperLeftShoulder]))
+
+
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
@@ -188,7 +203,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         key = cv2.waitKey(delay)
         if key == 27:  # esc
-            save_to_csv(trainData)
+            if trainData is not None:
+                save_to_csv(trainData)
             return
         elif key == 112:  # 'p'
             
