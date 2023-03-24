@@ -16,6 +16,7 @@ class Pose:
                       dtype=np.float32) / 10.0
     vars = (sigmas * 2) ** 2
     last_id = -1
+    state = None #
     color = [0, 224, 255]
 
     def __init__(self, keypoints, confidence):
@@ -24,6 +25,7 @@ class Pose:
         self.confidence = confidence
         self.bbox = Pose.get_bbox(self.keypoints)
         self.id = None
+        # self.state = None
         self.filters = [[OneEuroFilter(), OneEuroFilter()] for _ in range(Pose.num_kpts)]
 
     @staticmethod
@@ -43,6 +45,15 @@ class Pose:
         if self.id is None:
             self.id = Pose.last_id + 1
             Pose.last_id += 1
+
+    def update_state(self, state=None):
+        self.state = state
+        if self.state is not None:
+            Pose.state = state
+
+    # def get_state(self):
+    #     return Pose.state
+    
 
     def draw(self, img):
         assert self.keypoints.shape == (Pose.num_kpts, 2)

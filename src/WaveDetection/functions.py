@@ -20,15 +20,18 @@ def wave_detection(keyPoints,waveCounter,initialState):
     wave = False
     toggleAngle = 115 # state switching angle
     waveSpaceAngles = [250,30] # wave detection lower threshold and hand cross threshold
-
+    handWaved = 3 # time the hand is waved
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
+
+
     if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
         return
     angleA = 360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) 
     angleB = calculate_angle(right_shoulder,left_shoulder,left_wrist)
     angleAvg = int((angleA + angleB ) / 2 )
-    print(angleAvg)
+
+    #print(angleAvg)
     if angleA < waveSpaceAngles[0]  and angleB < waveSpaceAngles[0] and angleA > waveSpaceAngles[1] and angleB > waveSpaceAngles[1]: # wave detection space
         if (angleA >= (angleB - 20) and angleA <= (angleB + 20)) and( angleA >= (angleB - 20) and angleA <= (angleB + 20)):
             if angleAvg >= toggleAngle: # initial sate -> open
@@ -36,7 +39,7 @@ def wave_detection(keyPoints,waveCounter,initialState):
             elif angleAvg <= toggleAngle: # initial sate -> close
                 currentState = 1
             else:
-                currentState = 99
+                currentState = None
                 wave = False
                 #waveCounter = 0 # resets in check in every frame
             
@@ -45,14 +48,13 @@ def wave_detection(keyPoints,waveCounter,initialState):
             if currentState == 0 and initialState == 1: # open to close
                 waveCounter += 1
         else:
-            currentState = 99
+            currentState = None
     else:
-        currentState = 99 # anything but open or close
+        currentState = None # anything but open or close
         wave = False
         waveCounter = 0
         
-
-    if waveCounter >= 5:
+    if waveCounter >= handWaved:
         wave = True
 
     initialState = currentState

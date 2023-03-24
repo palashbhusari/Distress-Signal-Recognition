@@ -94,10 +94,9 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
     #initializing starting global wave variables
     waveCounter = 0
-    state = 99 # not open or close - > 0 0r 1
+    state = None # NONE |  open or close - > 0 0r 1
     
     for img in image_provider:
-        start_time = time.time()
 
         orig_img = img.copy()
         heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
@@ -138,7 +137,6 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         cv2.putText(img, 'FPS: '+ str(fps), (50,50), font, 
                         fontScale, (255,0,0), thickness, cv2.LINE_AA)
         
-
         prev_frame_time = new_frame_time
         
 
@@ -167,7 +165,11 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 handraise = True
                 cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
+            state = pose.state
+            print("before passing: ", state, pose.id)
             waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
+            pose.update_state(state)
+            print("after update: ", pose.state, pose.id)
             if wave:
                 cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
