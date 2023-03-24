@@ -58,5 +58,5 @@ def wave_detection(keyPoints,waveCounter,initialState):
         wave = True
 
     initialState = currentState
-    print(f"count:{waveCounter} state:{initialState}")
+    print(f"count:{waveCounter} state:{initialState}\n")
     return waveCounter, initialState, wave
