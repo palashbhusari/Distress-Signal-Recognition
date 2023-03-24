@@ -161,7 +161,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             facing_front = right_shoulderY <  left_shoulderY # check face direction
             if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
                 handraise = True
-                cv2.putText(img, "algo: Hand raise", (200, 50), font, 1,(0,0,255), thickness, cv2.LINE_4)
+                cv2.putText(img, "algo: Hand raise", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
             # # collect training data

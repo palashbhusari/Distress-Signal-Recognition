@@ -47,9 +47,9 @@ class Pose:
             self.id = Pose.last_id + 1
             Pose.last_id += 1
 
-    # def update_state(self, state=None, count=0):
-    #     Pose.state = state
-    #     Pose.count = count
+    def update_state(self, state=None, count=0):
+        Pose.state = state
+        Pose.count = count
        
 
 
