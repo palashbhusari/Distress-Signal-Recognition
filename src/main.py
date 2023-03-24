@@ -165,16 +165,16 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 handraise = True
                 cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
-            # state = pose.state
-            # waveCounter = pose.count
-            # print(f"before: state {pose.state} cnt: {pose.count} id: {pose.id}")
-            # print(" ")
-            # waveCounter1, state1, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
-            # pose.update_state(state1, waveCounter1)
-            # print(f"after: state {pose.state} cnt: {pose.count} id: {pose.id}")
-            # print("  ")
-            # if wave:
-            #     cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
+            state = pose.state
+            waveCounter = pose.count
+            print(f"before: state {pose.state} cnt: {pose.count} id: {pose.id}")
+            print(" ")
+            waveCounter1, state1, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
+            pose.update_state(state1, waveCounter1)
+            print(f"after: state {pose.state} cnt: {pose.count} id: {pose.id}")
+            print("  ")
+            if wave:
+                cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
