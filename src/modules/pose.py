@@ -3,11 +3,6 @@ import numpy as np
 
 from modules.keypoints import BODY_PARTS_KPT_IDS, BODY_PARTS_PAF_IDS
 from modules.one_euro_filter import OneEuroFilter
-from WaveDetection.functions import wave_detection,calculate_angle
-
-# #initializing starting global wave variables
-# waveCounter = 0
-# state = None # NONE |  open or close - > 0 0r 1
 
 class Pose:
     num_kpts = 18
@@ -52,9 +47,9 @@ class Pose:
             self.id = Pose.last_id + 1
             Pose.last_id += 1
 
-    def update_state(self, state=None, count=0):
-        Pose.state = state
-        Pose.count = count
+    # def update_state(self, state=None, count=0):
+    #     Pose.state = state
+    #     Pose.count = count
        
 
 
@@ -118,18 +113,6 @@ def track_poses(previous_poses, current_poses, threshold=3, smooth=False ):
         else:  # pose not similar to any previous
             best_matched_pose_id = None
         current_pose.update_id(best_matched_pose_id)
-    
-        state = current_pose.state
-        waveCounter = current_pose.count
-        print(f"before: state {current_pose.state} cnt: {current_pose.count} id: {current_pose.id}")
-        print(" ")
-        waveCounter1, state1, wave = wave_detection(current_pose.keypoints,waveCounter,state) # hand wave detection algorithm
-        current_pose.update_state(state1, waveCounter1)
-        print(f"after: state {current_pose.state} cnt: {current_pose.count} id: {current_pose.id}")
-        print("  ")
-        if wave:
-            print("\n------------------WAVE DETECTED----------------\n")
-            #cv2.putText(img, "Wave Detected", (300, 100), font, 2,(0,0,255), thickness, cv2.LINE_4)
 
         if smooth:
             for kpt_id in range(Pose.num_kpts):
