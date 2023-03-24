@@ -161,7 +161,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             facing_front = right_shoulderY <  left_shoulderY # check face direction
             if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
                 handraise = True
-                cv2.putText(img, "Hand raise", (300, 50), font, 2,(0,0,255), thickness, cv2.LINE_4)
+                cv2.putText(img, "algo: Hand raise", (200, 50), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
             # # collect training data
@@ -176,7 +176,11 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
             upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
 
-            print(infer([upperRightShoulder, upperLeftShoulder]))
+            ml_handraise = infer([upperRightShoulder, upperLeftShoulder])
+            if ml_handraise == 1:
+                cv2.putText(img, "ML: Hand raise", (50, 50), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            else:
+                cv2.putText(img, "ML: NO", (50, 50), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
 
