@@ -10,7 +10,7 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtraction_HR import extract_data, save_to_csv, calculate_angle
+from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle
 from ML.prediction import infer
 
 
@@ -167,25 +167,9 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
-            # # collect training data
-            # trainData = extract_data(pose.keypoints,handraise)
-            # # Prediction 
-            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
-            right_shoulder,left_shoulder = pose.keypoints[2],pose.keypoints[5]
-
-            if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
-                return
-    
-            upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
-            upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
-
-            ml_handraise = infer([upperRightShoulder, upperLeftShoulder])
-            if ml_handraise == 1:
-                cv2.putText(img, "ML: Hand raise", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-
-
+            # collect training data
+            trainData = extract_data(pose.keypoints,handraise)
+           
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
