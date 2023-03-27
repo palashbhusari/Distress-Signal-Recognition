@@ -11,8 +11,11 @@ from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
 from ML.dataExtraction_HR import extract_data, save_to_csv, calculate_angle
-from ML.prediction import infer
 
+
+import joblib
+
+HandRaiseModel = joblib.load('ML/HandRaiseModels/model_random_forest.sav')
 
 class ImageReader(object):
     def __init__(self, file_names):
@@ -93,6 +96,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     delay = 1
     new_frame_time = 0 
     prev_frame_time = 0 
+    trainData = None
     
     for img in image_provider:
 
@@ -166,9 +170,11 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
-            # # collect training data
+        # # collect training data
             # trainData = extract_data(pose.keypoints,handraise)
-            # # Prediction 
+
+
+        # # Prediction 
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
             right_shoulder,left_shoulder = pose.keypoints[2],pose.keypoints[5]
 
@@ -178,7 +184,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
             upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
 
-            ml_handraise = infer([upperRightShoulder, upperLeftShoulder])
+            ml_handraise =  HandRaiseModel.predict([[upperRightShoulder, upperLeftShoulder]]) # pridiction for hand raise
+
             if ml_handraise == 1:
                 cv2.putText(img, "ML: Hand raise", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
             else:
@@ -209,8 +216,11 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         key = cv2.waitKey(delay)
         if key == 27:  # esc
-            if trainData is not None:
+            if trainData:
                 save_to_csv(trainData)
+                print("train data saved")
+            else:
+                print("No Train data")
             return
         elif key == 112:  # 'p'
             

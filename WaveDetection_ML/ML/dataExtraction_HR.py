@@ -38,10 +38,6 @@ def extract_data(keyPoints,handraise):
     else:
         dataDict['handRaise'].append(0)
 
-
-    daraFrame = pd.DataFrame(dataDict)
-    daraFrame.to_csv("train1.csv")
-
     return dataDict
 
 def save_to_csv(daraFrame):

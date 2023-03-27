@@ -93,6 +93,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     delay = 1
     new_frame_time = 0 
     prev_frame_time = 0 
+    trainData = None
     
     for img in image_provider:
 
@@ -209,8 +210,11 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
         key = cv2.waitKey(delay)
         if key == 27:  # esc
-            if trainData is not None:
+            if trainData:
                 save_to_csv(trainData)
+                print("train data saved")
+            else:
+                print("No Train data")
             return
         elif key == 112:  # 'p'
             
