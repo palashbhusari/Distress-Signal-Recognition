@@ -171,7 +171,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
 
         # # collect training data
-            # trainData = extract_data(pose.keypoints,handraise)
+        #     trainData = extract_data(pose.keypoints,handraise)
 
 
         # # Prediction 
