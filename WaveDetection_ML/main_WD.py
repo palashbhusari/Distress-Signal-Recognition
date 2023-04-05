@@ -10,8 +10,8 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle
-from ML.prediction import infer
+from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer
+# from ML.prediction import infer
 
 
 class ImageReader(object):
@@ -167,8 +167,18 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                 cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 
-            # collect training data
-            trainData = extract_data(pose.keypoints,False)
+            # # collect training data
+            # trainData = extract_data(pose.keypoints,False)
+
+            # prdiction
+
+            waveDetection =infer(pose.keypoints)
+
+            if waveDetection == 1:
+                cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            else:
+                cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+
            
 
 ############ just for refrence

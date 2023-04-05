@@ -2,12 +2,22 @@
 import math
 import pandas as pd
 
+# load ml model 
+import joblib
+WaveModel = joblib.load('ML/WaveDetectionModels/wave_model_random_forest.sav')
+
+
 
 dataBufferVal = 0
 dataDict = {'upperRightShoulder':[], 'upperLeftShoulder':[], 'TargetWave':[]}
 dataBuffer = {'upperRightShoulder':[], 'upperLeftShoulder':[]}
+waveDetect = 0 #initalise prediction variable
 
 def extract_data(keyPoints,wave):
+    """
+        keypoint -> full body keypoint
+        wave -> while training wave send true others false
+    """
     global dataDict
     global dataBufferVal
     global dataBuffer
@@ -38,6 +48,42 @@ def extract_data(keyPoints,wave):
         dataBufferVal += 1
 
     return dataDict
+
+
+def infer(keyPoints):
+    global dataBufferVal
+    global dataBuffer
+    global waveDetect
+
+    right_wrist,left_wrist = keyPoints[4], keyPoints[7]
+    right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
+
+    if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
+        return
+    
+    upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
+    upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
+
+    # data collection
+    if dataBufferVal >= 60:
+        # ML infer
+       detectData = dataBuffer["upperRightShoulder"] + dataBuffer['upperLeftShoulder']
+       waveDetect = WaveModel.predict([detectData])
+
+
+       dataBufferVal = 59 # reset data buffer values
+       dataBuffer['upperRightShoulder'].pop(0) # remove first element
+       dataBuffer['upperLeftShoulder'].pop(0) # remove first element
+
+
+    else:
+        dataBuffer['upperRightShoulder'].append(upperRightShoulder)
+        dataBuffer['upperLeftShoulder'].append(upperLeftShoulder)
+        dataBufferVal += 1
+
+    return waveDetect
+    
+
 
 def save_to_csv(data):
     daraFrame = pd.DataFrame(data)
