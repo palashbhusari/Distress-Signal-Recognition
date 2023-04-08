@@ -2,11 +2,14 @@
 import math
 import pandas as pd
 import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 
 # load ml model 
 import joblib
-WaveModel = joblib.load('ML/WaveDetectionModels/wave_model_random_forest.sav')
-
+# WaveModel = joblib.load('ML/WaveDetectionModels/wave_model_nn.joblib')
+# from keras.models import load_model
+WaveModel = tf.keras.models.load_model('model.h5')
 
 
 dataBufferVal = 0
@@ -68,8 +71,13 @@ def infer(keyPoints):
     # data collection
     if dataBufferVal >= 60:
         # ML infer
-       detectData = dataBuffer["upperRightShoulder"] + dataBuffer['upperLeftShoulder']
-       waveDetect = WaveModel.predict([detectData])
+       detectData = []
+       temp = []
+       temp.append(dataBuffer["upperRightShoulder"])
+       temp.append(dataBuffer['upperLeftShoulder'])
+       detectData.append([temp])
+       detectData = np.array(detectData)
+       waveDetect = 1 if WaveModel.predict([detectData]) >= 0.5 else 0
 
 
        dataBufferVal = 59 # reset data buffer values

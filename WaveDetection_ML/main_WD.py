@@ -168,16 +168,16 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
 
             # # collect training data
-            trainData = extract_data(pose.keypoints,True)
+            # trainData = extract_data(pose.keypoints,True)
 
             # prediction
 
-            # waveDetection =infer(pose.keypoints)
+            waveDetection =infer(pose.keypoints)
 
-            # if waveDetection == 1:
-            #     cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            # else:
-            #     cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            if waveDetection == 1:
+                cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            else:
+                cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
            
 
