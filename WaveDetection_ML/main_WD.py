@@ -10,7 +10,7 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer
+from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer, save_to_numpy
 # from ML.prediction import infer
 
 
@@ -168,16 +168,16 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
 
             # # collect training data
-            # trainData = extract_data(pose.keypoints,False)
+            trainData = extract_data(pose.keypoints,False)
 
-            # prdiction
+            # prediction
 
-            waveDetection =infer(pose.keypoints)
+            # waveDetection =infer(pose.keypoints)
 
-            if waveDetection == 1:
-                cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # if waveDetection == 1:
+            #     cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # else:
+            #     cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
            
 
@@ -206,6 +206,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         if key == 27:  # esc
             if trainData:
                 save_to_csv(trainData)
+                save_to_numpy(trainData)
                 print("train data saved")
             else:
                 print("No Train data")

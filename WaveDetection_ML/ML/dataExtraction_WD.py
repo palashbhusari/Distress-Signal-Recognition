@@ -1,6 +1,7 @@
 # function for extraxting data point for model training
 import math
 import pandas as pd
+import numpy as np
 
 # load ml model 
 import joblib
@@ -89,6 +90,11 @@ def save_to_csv(data):
     daraFrame = pd.DataFrame(data)
     daraFrame.to_csv("train_wave.csv")
 
+def save_to_numpy(data):
+    daraFrame = pd.DataFrame(data)
+    df = daraFrame.to_numpy()
+    np.save("train_wave_npy.npy",df)
+    np.savez("train_wave_savez.npz",df)
 
 def calculate_angle(pt1,pt2,pt3):
     """Calculates the angle between pt1 - pt2 - pt3 | pt = [y,x]"""
