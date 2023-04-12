@@ -3,19 +3,37 @@ import math
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
+# import keras
+# from keras.models import Sequential 
+# from tensorflow.python.keras.layers import Dense, Flatten, Dropout
 
 # load ml model 
-import joblib
+# import joblib
 # WaveModel = joblib.load('ML/WaveDetectionModels/wave_model_nn.joblib')
 # from keras.models import load_model
-WaveModel = tf.keras.models.load_model('model.h5')
-
+WaveModel = tf.keras.models.load_model('./WaveDetectionModels/model.h5')
 
 dataBufferVal = 0
 dataDict = {'upperRightShoulder':[], 'upperLeftShoulder':[], 'TargetWave':[]}
 dataBuffer = {'upperRightShoulder':[], 'upperLeftShoulder':[]}
 waveDetect = 0 #initalise prediction variable
+
+# # Define a simple sequential model
+# def create_model():
+#     model = tf.keras.Sequential([ 
+#         keras.layers.Flatten(input_shape=(1,2,60)),  
+#         keras.layers.Dense(16, activation='relu', input_shape=(1,2,60)),
+#         keras.layers.Dropout(0.2),
+#         keras.layers.Dense(8),
+#         keras.layers.Dense(1,activation='sigmoid')
+#     ])
+
+#     model.compile(optimizer='adam',
+#                     loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+#                     metrics=[tf.keras.metrics.BinaryAccuracy()])
+
+#     return model
+
 
 def extract_data(keyPoints,wave):
     """
@@ -59,6 +77,12 @@ def infer(keyPoints):
     global dataBuffer
     global waveDetect
 
+    # # Create a basic model instance
+    # WaveModel = create_model()
+
+    # # Restore the weights
+    # WaveModel.load_weights('./checkpoints/my_checkpoint')
+
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
 
@@ -92,8 +116,6 @@ def infer(keyPoints):
 
     return waveDetect
     
-
-
 def save_to_csv(data):
     daraFrame = pd.DataFrame(data)
     daraFrame.to_csv("train_wave.csv")
