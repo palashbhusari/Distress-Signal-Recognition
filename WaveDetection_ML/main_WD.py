@@ -10,8 +10,11 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer, save_to_numpy
-# from ML.prediction import infer
+from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer, save_to_numpy,wave_detection
+
+# from ..WaveDetection_algorithm.WaveDetection.functions import wave_detection
+
+
 
 
 class ImageReader(object):
@@ -94,6 +97,10 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     new_frame_time = 0 
     prev_frame_time = 0 
     trainData = None
+
+    #initializing for algorihtm
+    waveCounter = 0
+    state = None # NONE |  open or close - > 0 0r 1
     
     for img in image_provider:
 
@@ -158,28 +165,34 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             left_elbowY, left_elbowX = pose.keypoints[6][0], pose.keypoints[6][1]
             
             # # detect right hand raise
-            handraise = False
-            facing_front = right_shoulderY <  left_shoulderY # check face direction
-            if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
-                handraise = True
-                cv2.putText(img, "algo: Hand raise", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # handraise = False
+            # facing_front = right_shoulderY <  left_shoulderY # check face direction
+            # if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
+            #     handraise = True
+            #     cv2.putText(img, "algo: Hand raise", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # else:
+            #     cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
-
+            ##algorithmic wave
+            # waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
+            # if wave:
+            #     cv2.putText(img, "Algo: Wave Detected", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # else:
+            #     cv2.putText(img, "Algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            
             # # collect training data
-            # trainData = extract_data(pose.keypoints,True)
+            trainData = extract_data(pose.keypoints,False)
 
             # prediction
 
-            waveDetection =infer(pose.keypoints)
-
-            if waveDetection == 1:
-                cv2.putText(img, "ML: Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "ML: NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-
+            # waveDetection = infer(pose.keypoints)
+            # if waveDetection >=0.8:
+            #     cv2.putText(img, "ML: "+str(waveDetection) + " Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # else:
+            #     cv2.putText(img, "ML: "+str(waveDetection) + " NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
            
+            # if wave and waveDetection >=0.8:
+            #     cv2.putText(img, "Halleluyah", (50, 200), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
@@ -205,7 +218,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         key = cv2.waitKey(delay)
         if key == 27:  # esc
             if trainData:
-                save_to_csv(trainData)
+                #save_to_csv(trainData)
                 save_to_numpy(trainData)
                 print("train data saved")
             else:
