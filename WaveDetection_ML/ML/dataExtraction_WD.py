@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from tensorflow import keras
 
-WaveModel = tf.keras.models.load_model('ML/WaveDetectionModels/model_nn3.h5')
+WaveModel = tf.keras.models.load_model('ML/WaveDetectionModels/model_nn_40pt_v2.h5')
 dataBufferVal = 0
 dataDict = {'upperRightShoulder':[], 'upperLeftShoulder':[], 
             'rightShoulderElbow':[], 'leftShoulderElbow':[],
@@ -16,7 +16,7 @@ dataBuffer = {'upperRightShoulder':[], 'upperLeftShoulder':[],
               'rightShoulderElbow':[], 'leftShoulderElbow':[],
               'rightElbowWrist':[], 'leftElbowWrist':[]}
 waveDetect = 0 #initalise prediction variable
-
+inference_window = 0
 
 def extract_data(keyPoints,wave):
     """
@@ -26,6 +26,7 @@ def extract_data(keyPoints,wave):
     global dataDict
     global dataBufferVal
     global dataBuffer
+    
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
     right_elbow,left_elbow = keyPoints[3], keyPoints[6]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
@@ -71,13 +72,14 @@ def extract_data(keyPoints,wave):
 
     return dataDict
 
-
 def infer(keyPoints):
     global dataBufferVal
     global dataBuffer
     global waveDetect
+    global inference_window
 
     right_wrist,left_wrist = keyPoints[4], keyPoints[7]
+    right_elbow,left_elbow = keyPoints[3], keyPoints[6]
     right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
 
     if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
@@ -86,28 +88,55 @@ def infer(keyPoints):
     upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
     upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
 
+    rightShoulderElbow = int(360 - calculate_angle(left_shoulder,right_shoulder,right_elbow) )
+    leftShoulderElbow = int(calculate_angle(right_shoulder,left_shoulder,left_elbow))
+
+    rightElbowWrist = int(360 - calculate_angle(right_shoulder,right_elbow,right_wrist) )
+    leftElbowWrist = int(calculate_angle(left_shoulder,left_elbow,left_wrist))
+
+
+
     # data collection
-    if dataBufferVal >= 60:
+    if dataBufferVal >= 40:
         # ML infer
        detectData = []
        temp = []
        temp.append(dataBuffer["upperRightShoulder"])
        temp.append(dataBuffer['upperLeftShoulder'])
+
+       temp.append(dataBuffer['rightShoulderElbow'])
+       temp.append(dataBuffer['leftShoulderElbow'])
+
+       temp.append(dataBuffer['rightElbowWrist'])
+       temp.append(dataBuffer['leftElbowWrist'])
+
        detectData.append([temp])
        detectData = np.array(detectData)
-       #waveDetect = 1 if WaveModel.predict([detectData],verbose = 0) >= 0.5 else 0
-       waveDetect = np.round(WaveModel.predict([detectData],verbose = 0),2) * 100
 
-       dataBufferVal = 59 # reset data buffer values
+       if inference_window >= 5:
+        #waveDetect = 1 if WaveModel.predict([detectData],verbose = 0) >= 0.5 else 0
+        waveDetect = np.round(WaveModel.predict([detectData],verbose = 0),2) * 100
+        inference_window = 0
+
+       dataBufferVal -=1 # reset data buffer values
        dataBuffer['upperRightShoulder'].pop(0) # remove first element
        dataBuffer['upperLeftShoulder'].pop(0) # remove first element
-
+       dataBuffer['rightShoulderElbow'].pop(0)
+       dataBuffer['leftShoulderElbow'].pop(0)
+       dataBuffer['rightElbowWrist'].pop(0)
+       dataBuffer['leftElbowWrist'].pop(0)
 
     else:
         dataBuffer['upperRightShoulder'].append(upperRightShoulder)
         dataBuffer['upperLeftShoulder'].append(upperLeftShoulder)
+        dataBuffer['rightShoulderElbow'].append(rightShoulderElbow)
+        dataBuffer['leftShoulderElbow'].append(leftShoulderElbow)
+        dataBuffer['rightElbowWrist'].append(rightElbowWrist)
+        dataBuffer['leftElbowWrist'].append(leftElbowWrist)  
+        
         dataBufferVal += 1
 
+    inference_window +=1
     return waveDetect
     
 def save_to_csv(data):
@@ -117,7 +146,7 @@ def save_to_csv(data):
 def save_to_numpy(data):
     daraFrame = pd.DataFrame(data)
     df = daraFrame.to_numpy()
-    np.save("train_wave_npy6.npy",df)
+    np.save("train_wave_npy7.npy",df)
     #np.savez("train_wave_savez.npz",df)
 
 def calculate_angle(pt1,pt2,pt3):

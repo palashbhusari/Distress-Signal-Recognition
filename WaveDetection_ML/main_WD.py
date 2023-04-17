@@ -97,6 +97,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     new_frame_time = 0 
     prev_frame_time = 0 
     trainData = None
+    
+
 
     #initializing for algorihtm
     waveCounter = 0
@@ -173,26 +175,28 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             # else:
             #     cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
-            ##algorithmic wave
-            # waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
-            # if wave:
-            #     cv2.putText(img, "Algo: Wave Detected", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            # else:
-            #     cv2.putText(img, "Algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            # algorithmic wave
+            waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
+            if wave:
+                cv2.putText(img, "Algo: Wave Detected", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            else:
+                cv2.putText(img, "Algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
             
-            # # collect training data
-            trainData = extract_data(pose.keypoints,False)
+            # collect training data
+
+            # trainData = extract_data(pose.keypoints,False)
 
             # prediction
+      
+            waveDetection = infer(pose.keypoints)
 
             # waveDetection = infer(pose.keypoints)
-            # if waveDetection >=0.8:
-            #     cv2.putText(img, "ML: "+str(waveDetection) + " Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            # else:
-            #     cv2.putText(img, "ML: "+str(waveDetection) + " NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+
+            if waveDetection >=80:
+                cv2.putText(img, "ML: "+str(waveDetection) + " Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
+            else:
+                cv2.putText(img, "ML: "+str(waveDetection) + " NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
            
-            # if wave and waveDetection >=0.8:
-            #     cv2.putText(img, "Halleluyah", (50, 200), font, 1,(0,0,255), thickness, cv2.LINE_4)
 
 ############ just for refrence
             right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
