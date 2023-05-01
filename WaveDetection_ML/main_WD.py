@@ -10,11 +10,9 @@ from modules.load_state import load_state
 from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 
-from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer, save_to_numpy,wave_detection
+from ML.dataExtraction_WD import extract_data, save_to_csv, calculate_angle, infer, save_to_numpy,wave_detection,multi_person_distress
 
 # from ..WaveDetection_algorithm.WaveDetection.functions import wave_detection
-
-
 
 
 class ImageReader(object):
@@ -97,6 +95,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     new_frame_time = 0 
     prev_frame_time = 0 
     trainData = None
+    waveDetection = 0
     
 
 
@@ -132,7 +131,7 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
 
         font = cv2.FONT_HERSHEY_SIMPLEX   # font
-        fontScale = 1 #fontScale
+        fontScale = 0.8 #fontScale
         color = (255, 255, 255)
         thickness = 2
 
@@ -142,8 +141,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         # since their will be most of time error of 0.001 second
         fps = 1/(new_frame_time-prev_frame_time)  # we will be subtracting it to get more accurate result
         fps = int(fps) # converting the fps into integer
-        cv2.putText(img, 'FPS: '+ str(fps), (50,50), font, 
-                        fontScale, (255,0,0), thickness, cv2.LINE_AA)
+        cv2.putText(img, 'FPS: '+ str(fps), (500,20), font, 
+                        fontScale,(140,11,4), thickness, cv2.LINE_4)
         
         prev_frame_time = new_frame_time
         
@@ -151,70 +150,71 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         if track:
             track_poses(previous_poses, current_poses, smooth=smooth)
             previous_poses = current_poses
-        # for pose in current_poses:  # drawing pose
-        #     pose.draw(img)
+        for pose in current_poses:  # drawing pose
+            pose.draw(img)
         img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
     
         for pose in current_poses:
-    # order of the [y,x] pose.keypoints => [0'nose', 1'neck', 2'r_sho', 3'r_elb', 4'r_wri', 5'l_sho', 6'l_elb',7'l_wri', 8'r_hip', 
-    #                            9'r_knee', 10'r_ank', 11'l_hip', 12'l_knee', 13'l_ank', 14'r_eye', 15'l_eye', 16'r_ear', 17'l_ear']
-            # coordinateY = pose.keypoints[0][0] # sample - getting nose key points y coordinate
-            # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate 
-            right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
-            left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
 
-            right_elbowY, right_elbowX = pose.keypoints[3][0], pose.keypoints[3][1]
-            left_elbowY, left_elbowX = pose.keypoints[6][0], pose.keypoints[6][1]
-            
-            # # detect right hand raise
-            # handraise = False
-            # facing_front = right_shoulderY <  left_shoulderY # check face direction
-            # if right_elbowX < right_shoulderX and left_elbowX < left_shoulderX and facing_front: # NOTE: change hand raise from above shoulder to above chest
-            #     handraise = True
-            #     cv2.putText(img, "algo: Hand raise", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            # else:
-            #     cv2.putText(img, "algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-
-            # algorithmic wave
-            waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
-            if wave:
-                cv2.putText(img, "Algo: Wave Detected", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "Algo: NO", (50, 100), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            
-            # collect training data
-
-            # trainData = extract_data(pose.keypoints,False)
-
-            # prediction
-      
-            waveDetection = infer(pose.keypoints)
-
-            # waveDetection = infer(pose.keypoints)
-
-            if waveDetection >=80:
-                cv2.putText(img, "ML: "+str(waveDetection) + " Wave Detected", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-            else:
-                cv2.putText(img, "ML: "+str(waveDetection) + " NO", (50, 150), font, 1,(0,0,255), thickness, cv2.LINE_4)
-           
-
-############ just for refrence
-            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
-            cv2.line(img, (right_shoulderY,right_shoulderX), (left_shoulderY, left_shoulderX), color, thickness)
-            cv2.line(img, (right_shoulderY,right_shoulderX), right_wrist, color, thickness) 
-            cv2.line(img, (left_shoulderY, left_shoulderX), left_wrist, color, thickness) 
-################         
-
-    # show keypoints on display
+     
+             ### show keypoints on display
             #draw coordinates on frame
-            cv2.putText(img, "R", (right_shoulderY,right_shoulderX ), font, fontScale, # Righ side inidcator
-                        color, thickness, cv2.LINE_4)
+            # cv2.putText(img, "R", (right_shoulderY,right_shoulderX ), font, fontScale, # Righ side inidcator
+            #             color, thickness, cv2.LINE_4)
             
             # cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
             #               (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
             if track:
                 cv2.putText(img, 'id: {}'.format(pose.id), (pose.bbox[0], pose.bbox[1] - 16),
                             cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+
+
+        # order of the [y,x] pose.keypoints => [0'nose', 1'neck', 2'r_sho', 3'r_elb', 4'r_wri', 5'l_sho', 6'l_elb',7'l_wri', 8'r_hip', 
+        #                            9'r_knee', 10'r_ank', 11'l_hip', 12'l_knee', 13'l_ank', 14'r_eye', 15'l_eye', 16'r_ear', 17'l_ear']
+                # coordinateY = pose.keypoints[0][0] # sample - getting nose key points y coordinate
+                # coordinateX = pose.keypoints[0][1] # sample - getting nose key points x coordinate 
+
+        ### algorithmic wave
+            # waveCounter, state, wave = wave_detection(pose.keypoints,waveCounter,state) # hand wave detection algorithm
+            # if wave:
+            #     color = (0, 0, 255)
+            #     cv2.putText(img, "Algo: ", (10, 25), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+            #     cv2.putText(img, " Distress signal detected", (60, 25), font, fontScale,color, thickness, cv2.LINE_4)
+            # else:
+            #     color = (27, 140, 4)
+            #     cv2.putText(img, "Algo: ", (10, 25), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+            #     # cv2.putText(img, " No distress signal", (60, 25), font, fontScale,color, thickness, cv2.LINE_4)
+            
+        ## collect training data
+            trainData = extract_data(pose.keypoints,False)
+        
+        ### prediction single pperson
+            #waveDetection = infer(pose.keypoints)
+
+        # ### multiperson 
+        #     waveDetection = multi_person_distress(pose.id, pose.keypoints)
+        #     if waveDetection >=80:
+        #         break
+        
+            ############ just for refrence
+            right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
+            left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
+            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
+            cv2.line(img, (right_shoulderY,right_shoulderX), (left_shoulderY, left_shoulderX), color, thickness)
+            cv2.line(img, (right_shoulderY,right_shoulderX), right_wrist, color, thickness) 
+            cv2.line(img, (left_shoulderY, left_shoulderX), left_wrist, color, thickness) 
+            ################  
+
+        # if waveDetection >=80:
+        #     color = (0, 0, 255)
+        #     cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+        #     cv2.putText(img, "Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
+        # else:
+        #     color = (27, 140, 4)
+        #     cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+        #     # cv2.putText(img, "No Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
+           
+
 
         cv2.imshow('Distress Signal recognition', img)
 

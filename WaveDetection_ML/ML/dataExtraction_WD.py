@@ -17,6 +17,10 @@ dataBuffer = {'upperRightShoulder':[], 'upperLeftShoulder':[],
               'rightElbowWrist':[], 'leftElbowWrist':[]}
 waveDetect = 0 #initalise prediction variable
 inference_window = 0
+idKeypointsHashmap = dict()
+
+stableWaveCounter = 0
+clearCounter = 0
 
 def extract_data(keyPoints,wave):
     """
@@ -113,12 +117,13 @@ def infer(keyPoints):
        detectData.append([temp])
        detectData = np.array(detectData)
 
-       if inference_window >= 5:
-        #waveDetect = 1 if WaveModel.predict([detectData],verbose = 0) >= 0.5 else 0
+       if inference_window >= 5: # infer every 5 points
         waveDetect = np.round(WaveModel.predict([detectData],verbose = 0),2) * 100
+        waveDetect = int(waveDetect)
         inference_window = 0
 
-       dataBufferVal -=1 # reset data buffer values
+       ##reset data buffer values
+       dataBufferVal -=1 
        dataBuffer['upperRightShoulder'].pop(0) # remove first element
        dataBuffer['upperLeftShoulder'].pop(0) # remove first element
        dataBuffer['rightShoulderElbow'].pop(0)
@@ -138,7 +143,126 @@ def infer(keyPoints):
 
     inference_window +=1
     return waveDetect
+
+
+def infer_simple(data):
+    global inference_window
+    global waveDetect
+    if inference_window >= 3: # infer every 5 points
+        waveDetect = int(np.round(WaveModel.predict([data],verbose = 0),2) * 100)
+        inference_window = 0
+    inference_window+=1
+    return waveDetect
+
+def multi_person_distress(id,keyPoints):
+    """ save previous 40 keypoints with id"""
+    global dataBufferVal
+    global dataBuffer
+    global waveDetect
+    global inference_window
+    global idKeypointsHashmap
+    global clearCounter
+
+    right_wrist,left_wrist = keyPoints[4], keyPoints[7]
+    right_elbow,left_elbow = keyPoints[3], keyPoints[6]
+    right_shoulder,left_shoulder = keyPoints[2],keyPoints[5]
+
+    if right_wrist[0] == None or left_wrist[0] == None: # check if we have wrist coordinates
+        return
     
+    upperRightShoulder = int(360 - calculate_angle(left_shoulder,right_shoulder,right_wrist) )
+    upperLeftShoulder = int(calculate_angle(right_shoulder,left_shoulder,left_wrist))
+
+    rightShoulderElbow = int(360 - calculate_angle(left_shoulder,right_shoulder,right_elbow) )
+    leftShoulderElbow = int(calculate_angle(right_shoulder,left_shoulder,left_elbow))
+
+    rightElbowWrist = int(360 - calculate_angle(right_shoulder,right_elbow,right_wrist) )
+    leftElbowWrist = int(calculate_angle(left_shoulder,left_elbow,left_wrist))
+
+
+    if id not in idKeypointsHashmap: # if id not in hashmap ADD
+        dataBuffer['upperRightShoulder'].append(upperRightShoulder)
+        dataBuffer['upperLeftShoulder'].append(upperLeftShoulder)
+        dataBuffer['rightShoulderElbow'].append(rightShoulderElbow)
+        dataBuffer['leftShoulderElbow'].append(leftShoulderElbow)
+        dataBuffer['rightElbowWrist'].append(rightElbowWrist)
+        dataBuffer['leftElbowWrist'].append(leftElbowWrist)  
+        dataBuffer.update({"frameCount":1})
+
+        idKeypointsHashmap[id] = dataBuffer # ADD
+
+        # clear data buffer for next pose id
+        dataBuffer = {'upperRightShoulder':[], 'upperLeftShoulder':[],
+              'rightShoulderElbow':[], 'leftShoulderElbow':[],
+              'rightElbowWrist':[], 'leftElbowWrist':[]}
+        
+
+    
+    elif id in idKeypointsHashmap : # if id  in hashmap APPEND
+        
+        if len(idKeypointsHashmap[id]['upperRightShoulder']) <= 40:
+            idKeypointsHashmap[id]['upperRightShoulder'].append(upperRightShoulder)
+            idKeypointsHashmap[id]['upperLeftShoulder'].append(upperLeftShoulder)
+            idKeypointsHashmap[id]['rightShoulderElbow'].append(rightShoulderElbow)
+            idKeypointsHashmap[id]['leftShoulderElbow'].append(leftShoulderElbow)
+            idKeypointsHashmap[id]['rightElbowWrist'].append(rightElbowWrist)
+            idKeypointsHashmap[id]['leftElbowWrist'].append(leftElbowWrist)
+
+        else: #pop one from front
+            idKeypointsHashmap[id]['upperRightShoulder'].pop(0)
+            idKeypointsHashmap[id]['upperLeftShoulder'].pop(0)
+            idKeypointsHashmap[id]['rightShoulderElbow'].pop(0)
+            idKeypointsHashmap[id]['leftShoulderElbow'].pop(0)
+            idKeypointsHashmap[id]['rightElbowWrist'].pop(0)
+            idKeypointsHashmap[id]['leftElbowWrist'].pop(0)
+  
+    print("hasmap len: ", len(idKeypointsHashmap) )
+    
+    keyList = [k for k in idKeypointsHashmap.keys()]
+
+    for ids in keyList:
+        idKeypointsHashmap[ids]["frameCount"] = idKeypointsHashmap[ids]["frameCount"] +1
+        print("keypoint length", len(idKeypointsHashmap[ids]['upperRightShoulder']))
+        if len(idKeypointsHashmap[ids]['upperRightShoulder']) >= 40: # check for valid ids only | TODO: need to clean
+            
+            detectData = []
+            temp = []
+            temp.append(idKeypointsHashmap[ids]["upperRightShoulder"][-40:])
+            temp.append(idKeypointsHashmap[ids]['upperLeftShoulder'][-40:])
+
+            temp.append(idKeypointsHashmap[ids]['rightShoulderElbow'][-40:])
+            temp.append(idKeypointsHashmap[ids]['leftShoulderElbow'][-40:])
+
+            temp.append(idKeypointsHashmap[ids]['rightElbowWrist'][-40:])
+            temp.append(idKeypointsHashmap[ids]['leftElbowWrist'][-40:])
+
+            # print("id:",ids, "length: ", len((detectData[0])))
+            # print(detectData)
+
+            detectData.append([temp])
+            detectData = np.array(detectData)
+            print("wave detect before: ", waveDetect)
+            waveDetect = infer_simple(detectData)
+            print("wave detect after: ", waveDetect)
+            if waveDetect >= 80:
+                print('break')
+                break
+
+        if idKeypointsHashmap[ids]["frameCount"] >= 79 and len(idKeypointsHashmap[ids]['upperRightShoulder']) < 30:
+            del idKeypointsHashmap[ids]
+        
+        else:
+            waveDetect =0
+
+#clear keypoints when running for continous
+    # if clearCounter == 150:
+    #     print("CLEAR")
+    #     idKeypointsHashmap = dict()
+    #     clearCounter = 0
+    #     waveDetect =0
+    # clearCounter +=1
+    return waveDetect
+
 def save_to_csv(data):
     daraFrame = pd.DataFrame(data)
     daraFrame.to_csv("train_wave.csv")
@@ -163,6 +287,10 @@ def calculate_angle(pt1,pt2,pt3):
         angle += 2 * math.pi
     return math.degrees(angle) if angle >= 0 else math.degrees(angle + 2 * math.pi)
 
+
+
+
+## move to other folder
 def wave_detection(keyPoints,waveCounter,initialState):
     wave = False
     toggleAngle = 115 # state switching angle
