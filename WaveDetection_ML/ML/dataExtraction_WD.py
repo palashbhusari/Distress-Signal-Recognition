@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from tensorflow import keras
 
-WaveModel = tf.keras.models.load_model('ML/WaveDetectionModels/model_nn_40pt_v2.h5')
+WaveModel = tf.keras.models.load_model('ML/WaveDetectionModels/model_nn_40pt_v10.h5')
 dataBufferVal = 0
 dataDict = {'upperRightShoulder':[], 'upperLeftShoulder':[], 
             'rightShoulderElbow':[], 'leftShoulderElbow':[],
@@ -216,13 +216,13 @@ def multi_person_distress(id,keyPoints):
             idKeypointsHashmap[id]['rightElbowWrist'].pop(0)
             idKeypointsHashmap[id]['leftElbowWrist'].pop(0)
   
-    print("hasmap len: ", len(idKeypointsHashmap) )
+    # print("hasmap len: ", len(idKeypointsHashmap) )
     
     keyList = [k for k in idKeypointsHashmap.keys()]
 
     for ids in keyList:
         idKeypointsHashmap[ids]["frameCount"] = idKeypointsHashmap[ids]["frameCount"] +1
-        print("keypoint length", len(idKeypointsHashmap[ids]['upperRightShoulder']))
+        # print("keypoint length", len(idKeypointsHashmap[ids]['upperRightShoulder']))
         if len(idKeypointsHashmap[ids]['upperRightShoulder']) >= 40: # check for valid ids only | TODO: need to clean
             
             detectData = []
@@ -241,11 +241,12 @@ def multi_person_distress(id,keyPoints):
 
             detectData.append([temp])
             detectData = np.array(detectData)
-            print("wave detect before: ", waveDetect)
+            # print("wave detect before: ", waveDetect)
             waveDetect = infer_simple(detectData)
-            print("wave detect after: ", waveDetect)
+            # print("wave detect after: ", waveDetect)
             if waveDetect >= 80:
-                print('break')
+                # print('break')
+                
                 break
 
         if idKeypointsHashmap[ids]["frameCount"] >= 79 and len(idKeypointsHashmap[ids]['upperRightShoulder']) < 30:

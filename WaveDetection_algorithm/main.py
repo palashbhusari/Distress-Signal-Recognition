@@ -213,7 +213,7 @@ if __name__ == '__main__':
                        This is just for quick results preview.
                        Please, consider c++ demo for the best performance.''')
     parser.add_argument('--checkpoint-path', type=str, required=True, help='path to the checkpoint')
-    parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
+    parser.add_argument('--height-size', type=int, default=512, help='network input layer height size')
     parser.add_argument('--video', type=str, default='', help='path to video file or camera id')
     parser.add_argument('--images', nargs='+', default='', help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')

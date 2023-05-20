@@ -150,8 +150,8 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
         if track:
             track_poses(previous_poses, current_poses, smooth=smooth)
             previous_poses = current_poses
-        for pose in current_poses:  # drawing pose
-            pose.draw(img)
+        # for pose in current_poses:  # drawing pose
+        #     pose.draw(img)
         img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
     
         for pose in current_poses:
@@ -185,37 +185,35 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
             #     cv2.putText(img, "Algo: ", (10, 25), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
             #     # cv2.putText(img, " No distress signal", (60, 25), font, fontScale,color, thickness, cv2.LINE_4)
             
-        ## collect training data
-            trainData = extract_data(pose.keypoints,False)
+        # ## collect training data
+        #     trainData = extract_data(pose.keypoints,False)
         
-        ### prediction single pperson
-            #waveDetection = infer(pose.keypoints)
+        ## prediction single person
+            # waveDetection = infer(pose.keypoints)
 
-        # ### multiperson 
-        #     waveDetection = multi_person_distress(pose.id, pose.keypoints)
-        #     if waveDetection >=80:
-        #         break
+        ### multiperson 
+            waveDetection = multi_person_distress(pose.id, pose.keypoints)
+            if waveDetection >=80:
+                break
         
-            ############ just for refrence
-            right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
-            left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
-            right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
-            cv2.line(img, (right_shoulderY,right_shoulderX), (left_shoulderY, left_shoulderX), color, thickness)
-            cv2.line(img, (right_shoulderY,right_shoulderX), right_wrist, color, thickness) 
-            cv2.line(img, (left_shoulderY, left_shoulderX), left_wrist, color, thickness) 
-            ################  
+            # ############ just for refrence
+            # right_shoulderY,right_shoulderX =  pose.keypoints[2][0], pose.keypoints[2][1]
+            # left_shoulderY, left_shoulderX =  pose.keypoints[5][0], pose.keypoints[5][1]
+            # right_wrist,left_wrist = pose.keypoints[4], pose.keypoints[7]
+            # cv2.line(img, (right_shoulderY,right_shoulderX), (left_shoulderY, left_shoulderX), color, thickness)
+            # cv2.line(img, (right_shoulderY,right_shoulderX), right_wrist, color, thickness) 
+            # cv2.line(img, (left_shoulderY, left_shoulderX), left_wrist, color, thickness) 
+            # ################  
 
-        # if waveDetection >=80:
-        #     color = (0, 0, 255)
-        #     cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
-        #     cv2.putText(img, "Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
-        # else:
-        #     color = (27, 140, 4)
-        #     cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
-        #     # cv2.putText(img, "No Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
+        if waveDetection >=80:
+            color = (0, 0, 255)
+            cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+            cv2.putText(img, "Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
+        else:
+            color = (27, 140, 4)
+            cv2.putText(img, "ML: ", (10, 60), font, fontScale,(255,255,255), thickness, cv2.LINE_4)
+            # cv2.putText(img, "No Distress signal detected " +str(waveDetection) + " %", (60, 60), font, fontScale,color, thickness, cv2.LINE_4)
            
-
-
         cv2.imshow('Distress Signal recognition', img)
 
 
